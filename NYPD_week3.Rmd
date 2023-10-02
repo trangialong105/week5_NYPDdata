@@ -1,0 +1,116 @@
+---
+title: "NYPD"
+author: "Gia Long Tran"
+date: "2023-09-17"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Step 1:Import some libraries
+```{r import_library}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+
+# define the dataset
+url_in <- "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD"
+
+# Read data
+Total_data <- read.csv(url_in)
+```
+
+
+## Step 2: Transform data(group by date, region, sex)
+
+Read the data
+```{r transform_data}
+library(dplyr)
+
+# Select relevant columns
+new_data <- Total_data %>%
+  select(OCCUR_DATE, OCCUR_TIME, BORO, PERP_SEX, VIC_SEX)
+
+# Rename columns
+colnames(new_data)[1] <- "Date"
+colnames(new_data)[2] <- "Time"
+colnames(new_data)[3] <- "Area"
+
+# Convert Date column to date format
+new_data <- new_data %>%
+  mutate(Date = mdy(Date))
+
+# Replace empty data with NA
+new_data[new_data == ""] <- NA
+
+```
+
+## Step 3: Vizualize 2 graphs/charts
+
+#### First visualization
+Analyzing:We have the most incidents in Brooklyn area(over 10000 cases), and the least is contributed by Staten Island(around 800 cases)
+
+```{r 1st_visualization, , echo=FALSE}
+library(ggplot2)
+
+# Create a bar plot
+ggplot(new_data, aes(x = Area)) +
+  geom_bar(fill = "red") +
+  labs(title = "Incidents by Area", x = "Area", y = "Count")
+
+```
+
+#### 2nd visualization
+Analyzing: From the chart, we can see male perpetrator is 10 times higher compare to female perpetrator(2500 versus 25000).
+
+```{r 2nd_visualization, , echo=FALSE}
+# Load necessary libraries
+library(ggplot2)
+
+# Create a bar chart of sex distribution
+ggplot(data = new_data, aes(x = VIC_SEX)) +
+  geom_bar(fill = "blue") +
+  labs(title = "Sex Distribution by Perpetrator",
+       x = "Sex",
+       y = "Count") +
+  theme_minimal()
+
+```
+
+
+## Step 4: modeling data
+Using Time Series Model:  it is a set of data points over time and used in analysis to forcast the future
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Convert the "Date" column to a date format
+new_data$Date <- as.Date(new_data$Date)
+
+# Group data by date and count the number of incidents per day
+incident_count <- new_data %>%
+  group_by(Date) %>%
+  summarize(Incidents = n())
+
+# Create a time series plot
+ggplot(incident_count, aes(x = Date, y = Incidents)) +
+  geom_line() +
+  labs(
+    title = "Incidents Over Time",
+    x = "Date",
+    y = "Number of Incidents"
+  ) +
+  theme_minimal()
+```
+
+Analyzing: the time series model, we can see that number of incidents maintain quite stable over the years and different periods of time. 
+
+## Bias indetifying
+Based on the report data, we can assume that male can easily commit crime(shooting) comparing to female. Additionally, staying away from two areas Brooklynx and Bronx is highly recommended for better safety. Lastly, the highest number of incidents occur during 2020. Probably Covid-19 may have a significant impact into this data, which I believe mental health during quarantine time.
